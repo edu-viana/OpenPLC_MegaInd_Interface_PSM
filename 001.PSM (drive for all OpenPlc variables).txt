@@ -1,0 +1,204 @@
+# ========= OpenPLC Python SubModule (PSM) ==================
+# ▬ ▬ ▬ ▬ ▬   Import all your libraries here    ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+import psm
+import time
+import megaind
+import xlsxwriter
+import os
+import subprocess
+import json
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬
+#  Insert your hardware initialization code in here  
+def hardware_init():  
+    psm.start()
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+def update_inputs():   # digital and analog inputs    
+#============================================================ 
+    #Leitura das entradas digitais [24vdc] getOptoCh (pilha, ch) 
+    opto_input1 = int(megaind.getOptoCh(0, 1)) 
+    psm.set_var("IX0.0", opto_input1) 
+
+    opto_input = int(megaind.getOptoCh(0, 2)) 
+    psm.set_var("IX0.1", opto_input) 
+
+    opto_input = int(megaind.getOptoCh(0, 3)) 
+    psm.set_var("IX0.2", opto_input) 
+
+    opto_input = int(megaind.getOptoCh(0, 4)) 
+    psm.set_var("IX0.3", opto_input)  
+#============================================================
+    #Leitura das entradas analógicas de tensão [0..10Vdc] get0_10In (pilha, ch) 
+    voltage_input = int(megaind.get0_10In(0, 1) * 1000) 
+    psm.set_var("IW0", voltage_input) 
+
+    voltage_input = int(megaind.get0_10In(0, 2) * 1000) 
+    psm.set_var("IW1", voltage_input) 
+
+    voltage_input = int(megaind.get0_10In(0, 3) * 1000)  
+    psm.set_var("IW2", voltage_input) 
+
+    voltage_input = int(megaind.get0_10In(0, 4) * 1000) 
+    psm.set_var("IW3", voltage_input)
+#============================================================ 
+    #Leitura das entradas analógicas em corrente [4..20mA ] get4_20In (pilha, ch) 
+    corrente_input = int(megaind.get4_20In(0, 1) * 1000) 
+    psm.set_var("IW4", corrente_input) 
+
+    corrente_input = int(megaind.get4_20In(0, 2) * 1000) 
+    psm.set_var("IW5", corrente_input) 
+
+    corrente_input = int(megaind.get4_20In(0, 3) * 1000) 
+    psm.set_var("IW6", corrente_input) 
+    corrente_input = int(megaind.get4_20In(0, 4) * 1000) 
+    psm.set_var("IW7", corrente_input) 
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+def update_outputs(): # digital and analog outputs
+#============================================================
+    #Escrita nas saídas digitais [24vdc] setOdPWM (pilha, ch, valor) 
+    OdPWM_output = psm.get_var("QX0.0") * 100.0 
+    megaind.setOdPWM(0, 1, OdPWM_output) 
+
+    OdPWM_output = psm.get_var("QX0.1") * 100.0 
+    megaind.setOdPWM(0, 2, OdPWM_output) 
+
+    OdPWM_output = psm.get_var("QX0.2") * 100.0 
+    megaind.setOdPWM(0, 3, OdPWM_output) 
+
+    OdPWM_output = psm.get_var("QX0.3") * 100.0 
+    megaind.setOdPWM(0, 4, OdPWM_output) 
+#============================================================
+    #Escrita nas saídas analógicas de tensão [0..10Vdc] set0_10Out (pilha, ch, valor) 
+ 
+    voltage_output = psm.get_var("QW0") / 1000.0 
+    megaind.set0_10Out(0, 1, voltage_output) 
+
+    voltage_output = psm.get_var("QW1") / 1000.0 
+    megaind.set0_10Out(0, 2, voltage_output) 
+
+    voltage_output = psm.get_var("QW2") / 1000.0 
+    megaind.set0_10Out(0, 3, voltage_output)  
+
+    voltage_output = psm.get_var("QW3") / 1000.0 
+    megaind.set0_10Out(0, 4, voltage_output) 
+#============================================================ 
+    #Escrita nas saídas analógicas de corrente [4..20mA] 
+    #set4_20Out (pilha, ch, valor) 
+#============================================================ 
+    corrente_output = psm.get_var("QW4") / 1000.0 
+    if corrente_output < 4: 
+        corrente_output = 4 
+    if corrente_output > 20: 
+        corrente_output = 20 
+    megaind.set4_20Out(0, 1, corrente_output) 
+
+    corrente_output = psm.get_var("QW5") / 1000.0 
+    if corrente_output < 4: 
+        corrente_output = 4 
+    if corrente_output > 20: 
+        corrente_output = 20 
+    megaind.set4_20Out(0, 2, corrente_output) 
+ 
+    corrente_output = psm.get_var("QW6")  
+    if corrente_output < 4: 
+        corrente_output = 4 
+    if corrente_output > 20: 
+        corrente_output = 20 
+    megaind.set4_20Out(0, 3, corrente_output ) 
+ 
+    corrente_output = psm.get_var("QW7")/1000.0 
+    if corrente_output < 4: 
+        corrente_output = 4 
+    if corrente_output > 20: 
+        corrente_output = 20 
+    megaind.set4_20Out(0,4,corrente_output)
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+def five_sec_routine():
+    millis = time.process_time_ns()  # Already converted in milliseconds
+    global prev_millis
+    if millis-prev_millis >= 5000000000:   # Time in nanoseconds ~ 5000ms [real value corresponding to 5sec is 5000000000]
+        print (millis-prev_millis)
+        prev_millis = millis    
+        print("5 secok, Whatch dog time is: " , megaind.wdtGetOffInterval(0))  #0 for stack 0..7
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+def half_sec_routine():
+    millis_half = time.process_time()
+    global prev_millis_half
+    if millis_half-prev_millis_half >= 0.5:
+        prev_millis_half = 0
+       # print ("half_sec ok")
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+def hundred_msec_routine():
+    millis_100 = time.process_time()  # Already converted in milliseconds
+    global prev_millis_100
+    if millis_100-prev_millis_100 >= .1:   # Time in nanoseconds ~ 5000ms [real value corresponding to 5sec is 5000000000]
+        prev_millis_100 = millis_100
+        #print("100 msec ok")
+        #update_inputs()
+        update_outputs()
+        if megaind.getLed(0, 1) == 1:
+            megaind.setLedAll(0, 0)
+        else:
+            megaind.setLedAll(0, 15)
+        stop = time.process_time_ns()
+        print ("Scan time in milliseconds is: ", ((stop - start)/1000000))
+# ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ ▬ 
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#Should be the last routine to run
+def scan_calc():
+    stop = time.time()
+    my_delay = round((stop-start)*1000,3)
+    print ( "Drive PSM scan time is: " , str(my_delay) , " milliseconds")
+    file = open(r'/home/pi/002.VS/scantime.txt', 'w')
+    file.write ("Drive PSM scan time is: " + str(my_delay) + " milliseconds")
+    file.close()
+
+#==== Excel file =============================================
+    #workbook = xlsxwriter.Workbook('/home/pi/002.VS/hello.xlsx')
+    #worksheet = workbook.add_worksheet()   
+    #worksheet.write('A1', 5)
+    #workbook.close()
+#==== Terminal  ==============================================
+    #os.system("your command line expression")
+#============================================================ 
+#json
+        #this is just a path.....node /home/pi/002.VS/hello/app.js
+        #p = subprocess.Popen(['/home/pi/002.VS/hello/app.js', 'Hello'], stdout=subprocess.PIPE)
+        #out = p.stdout.read()
+        #print(out)
+#============================================================ 
+if __name__ == "__main__":
+    prev_millis = 0
+    prev_millis_half = 0.0
+    prev_millis_100 = 0.0
+    hardware_init()
+    while (not psm.should_quit()):    
+        start = time.process_time_ns()
+        #global_time()
+        #update_inputs()
+        #update_outputs()        
+        five_sec_routine()
+        half_sec_routine()
+        hundred_msec_routine()
+        #scan_calc() # Remember last routine to run
+        
+    # In case CPU Stops, clear all outputs
+    megaind.setOdPWM(0, 1, 000) 
+    megaind.setOdPWM(0, 2, 000)
+    megaind.setOdPWM(0, 3, 000)
+    megaind.setOdPWM(0, 4, 000)
+    megaind.set0_10Out(0, 1, 000)
+    megaind.set0_10Out(0, 2, 000)
+    megaind.set0_10Out(0, 3, 000)
+    megaind.set0_10Out(0, 4, 000)
+    megaind.set4_20Out(0, 1, 000) 
+    megaind.set4_20Out(0, 2, 000) 
+    megaind.set4_20Out(0, 3, 000) 
+    megaind.set4_20Out(0, 4, 000) 
+    megaind.setLedAll(0, 2)
+
+    psm.stop()
+#============================================================ 
+#     Remarks  
+# always stop plc first before save changes. this will avoid error 121
